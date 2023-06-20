@@ -604,3 +604,82 @@ go to folder where have "MainActivity"> [rclick] "New" > [select] Activity > [se
 
 
 ### PASSING DATA BETWEEN ACTIVITIES
+
+here we pass data using putExtra function with data key that received activity can grab it from key.    
+
+> MainActivity.kt  
+
+```kt
+btnSendData.setOnClickListener {
+     val firstName = etFirstName.text.toString(); // get input value from edit text
+     val lastName = etLastName.text.toString(); // get input value from edit text
+     val country = etContry.text.toString(); // get input value from edit text
+     Intent(this, ActivityReceive::class.java).also {
+         it.putExtra("EXTRA_FIRST_NAME", firstName); // set value with key name
+         it.putExtra("EXTRA_LAST_NAME", firstName);
+         it.putExtra("EXTRA_COUNTRY", firstName);
+         startActivity(it);
+     }
+ }
+```
+
+show activity that receive data. by using key of value and intent.get[string|int] function can grab data from parent activity.    
+> ActivityReceive.kt  
+
+```kt
+val firstName = intent.getStringExtra("EXTRA_FIRST_NAME");
+val lastName = intent.getStringExtra("EXTRA_LAST_NAME");
+val country = intent.getStringExtra("EXTRA_COUNTRY");
+// display data from parent in received activity
+tvReceivedData.text = "$firstName $lastName from $country";
+```
+
+
+Let's pass the classes between the activities. (data class)
+[rclick] on MainActivity folder > [select] "New" > [select] "Kotlin File/Class" > [select] "class" > [input] "Name" as Person     
+
+we are going to pass following data class to child activity
+
+> Persion.kt
+```kt
+package com.example.test001
+
+import java.io.Serializable
+
+data class Person (
+    val firstName: String,
+    val lastName: String,
+    val country: String,
+        ): Serializable {
+
+}
+```
+
+
+> MainActivity.kt  
+
+```kt
+btnSendData.setOnClickListener {
+    val firstName = etFirstName.text.toString();
+    val lastName = etLastName.text.toString();
+    val country = etContry.text.toString();
+    val person = Person(firstName, lastName, country)
+    Intent(this, ActivityReceive::class.java).also {
+        it.putExtra("EXTRA_PERSON", person);
+
+        startActivity(it);
+    }
+}
+```
+
+show activity that receive data. by using key of value and intent.get[string|int] function can grab data from parent activity.    
+> ActivityReceive.kt  
+
+```kt
+val person = intent.getSerializableExtra("EXTRA_PERSON") as Person;
+
+tvReceivedData.text = person.toString();
+btnReturn.setOnClickListener {
+    finish();
+}
+```
