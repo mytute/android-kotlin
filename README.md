@@ -640,7 +640,8 @@ Let's pass the classes between the activities. (data class)
 
 we are going to pass following data class to child activity
 
-> Persion.kt
+> Persion.kt  
+
 ```kt
 package com.example.test001
 
@@ -683,3 +684,352 @@ btnReturn.setOnClickListener {
     finish();
 }
 ```
+
+
+### PERMISSIONS
+
+ACCESS_COARSE_LOCATION and ACCESS_BACKGROUND_LOCATION both are not above android version 10. below that work just location permission as documentation.
+
+tow type of permission    
+1. less sensitive (access to the internet)
+2. more sensitive (access the device location: need user permission)
+
+
+go to AndroidManifest.xml for init permission and if it more sensitive then permission will ask from user when it use.   
+
+> AndoridManifest.xml  
+
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    ...
+    <uses-permission android:name="android.permission.INTERNET"/> // no user permission
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    // for access location when app is using
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    // for access location when app is in backgroud mode
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+    // before android Q there was no COARSE and BACKGROUND but only one type of location.
+    ...
+    <application>
+      ...
+    </application>
+
+</manifest>  
+```   
+
+go to activity_main amd add button for start get permission.  
+
+> MainActivity.kt   
+
+```kt
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+            Log.d("mainActivity", "this is our first log message");
+
+           btnRequest.setOnClickListener {
+               requestPermissions();
+           }
+
+       }
+
+    // before this need to check whether device is above Android Q or not. otherwise this will crash the app.
+    // here we use "Manifest.permission" because it has all permission types as string.
+    private fun hasWriteExternalStoragePermission() =
+        ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
+
+    private fun hasLocationForegroundPermission()=
+        ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+    private fun hasLocationBackgroundPermission()=
+        ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+
+    private fun requestPermissions(){
+        // first have to check already have permission or not.
+        var permissionsToRequest = mutableListOf<String>();
+        if(!hasWriteExternalStoragePermission()){
+            permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+        if(!hasLocationForegroundPermission()){
+            permissionsToRequest.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        }
+        if(!hasLocationBackgroundPermission()){
+            permissionsToRequest.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+        }
+
+        // only one request permission function
+        if(permissionsToRequest.isNotEmpty()){
+            // .toTypedArray() is convert mutable list convert to string array
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), 0);
+        }
+    }
+
+    // check is user did accept the permission or not
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if(requestCode == 0 && grantResults.isNotEmpty() ){
+            for(i in grantResults.indices){ // loop index of grantResults array
+              if(grantResults[i] == PackageManager.PERMISSION_GRANTED){
+                  // print only user granted permission
+                  Log.d("PermissionRequest", "${permissions[i]} granted.");
+              }
+            }
+        }
+    }
+
+}
+
+```
+
+### IMPLICIT INTENTS
+
+example when our app need a photo and we dones not create the app user going to take photo for our app.
+
+in following example show how to browse image and browser can be any app that user have on phone.    
+
+```xml
+<Button
+    android:id="@+id/btnBrowse"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Browse Image"
+    android:textAllCaps="true"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent" />
+
+<ImageView
+    android:id="@+id/ivImage"
+    android:layout_width="270dp"
+    android:layout_height="400dp"
+    android:scaleType="centerCrop"
+    app:layout_constraintBottom_toTopOf="@+id/btnBrowse"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
+```
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+
+        btnBrowse.setOnClickListener {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED
+            ) {
+                openImageChooser();
+            } else {
+                openImageChooser();
+                // here have to ask permission
+                //requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 0)
+            }
+        }
+    }
+
+    private val getContent = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let {
+            ivImage.setImageURI(uri) // set image for layout
+        }
+    }
+
+    private fun openImageChooser() {
+        getContent.launch("image/*") // open only for images
+    }
+}
+```
+### TOOLBAR MENUS
+
+
+[r-click] "res" folder > [select] "New" > [select] "Android Resource Directory" > [select] on "Resource type" dropdown "menu" > [click] "Ok"     
+
+now inside "res" folder "menu" folder appeared
+
+[goto] 'res' folder > [r-click] "menu" folder > [select] "New" > [select] "Menu resource file" > [input] "File name" as "app_bar_menu"  
+
+next create icons for app bar menu (for settings and favorites)    
+
+[goto] "drawable" > [select] "New" > [select] "Image Asset" > [input] "Icon Type" to "Action Bar and Tab Icons" > [input] "Name" any name like "ic_settings" > [select] "Asset Type" to "Clip Art" > [click] "Clip Art" icon and search the icon > [input] "Theme" as you want like "HOLO_DARK"
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    // here add menu list
+    // top goes to left side of menu
+   <item
+       android:id="@+id/miSettings"
+       android:title="Settgins" // show as hint
+       android:icon="@drawable/ic_settings"
+       app:showAsAction="ifRoom"/> // show icon only if enough room
+    <item
+        android:id="@+id/miAddContanct"
+        android:title="Add Contact" // show as hint
+        android:icon="@drawable/ic_add_contact"
+        app:showAsAction="ifRoom"/> // show icon only if enough room
+    <item
+        android:id="@+id/miFavorite"
+        android:title="Favorite" // show as hint
+        android:icon="@drawable/ic_favorite"
+        app:showAsAction="always"/> // show icon always
+    <item
+        android:id="@+id/miFeedback"
+        android:title="Feeback" // show as menu title
+        app:showAsAction="never"/>  // no icon but as dropdown
+    <item
+        android:id="@+id/miClose"
+        android:title="Close App" // show as menu title
+        app:showAsAction="never"/> // no icon but as dropdown
+</menu>
+```
+
+then have to tell MainActivity.kt that we have menu
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        Log.d("mainActivity", "this is our first log message");
+    }
+
+    // for display menu
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.app_bar_menu, menu)
+        //return super.onCreateOptionsMenu(menu) // can remove default return
+        return true
+    }
+
+    // for add actions when click display menu items
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        //return super.onOptionsItemSelected(item) // can remove default return
+        when(item.itemId){
+            R.id.miAddContanct -> Toast.makeText(this, "You clicked on Add Contact", Toast.LENGTH_SHORT).show()
+            R.id.miFavorite -> Toast.makeText(this, "You clicked on Favorites", Toast.LENGTH_SHORT).show()
+            R.id.miSettings -> Toast.makeText(this, "You clicked on Settings", Toast.LENGTH_SHORT).show()
+            R.id.miClose -> finish()
+            R.id.miFeedback -> Toast.makeText(this, "You clicked on Feedback", Toast.LENGTH_SHORT).show()
+        }
+        return true;
+    }
+}
+```
+
+### ALERT DIALOG
+
+following examples show implement 3 types of Alert dialog
+1. yes no
+2. singlechoice (radio buttons)   
+3. multichoice (checkbox)
+
+```xml  
+<Button
+    android:id="@+id/btnDialog1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Dialog 1"
+    app:layout_constraintBottom_toTopOf="@+id/btnDialog2"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
+
+<Button
+    android:id="@+id/btnDialog2"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Dialog 2"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/btnDialog1" />
+
+<Button
+    android:id="@+id/btnDialog3"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Dialog 3"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@+id/btnDialog2" />
+```
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        Log.d("mainActivity", "this is our first log message");
+
+        // YES OR NOT Dialog box
+        // build a alert message
+        val addContactDialog = AlertDialog.Builder(this)
+            .setTitle("Add contact")
+            .setMessage("Do you want to add Mr. Poop to your contacts list? ")
+            .setIcon(R.drawable.ic_add_contact)
+            .setPositiveButton("Yes"){ dialogInterface, i -> // jere
+                Toast.makeText(this,"you add Mr. Poop to contact list", Toast.LENGTH_SHORT).show();
+            }
+            .setNegativeButton("No"){ dialogInterface, i ->
+                Toast.makeText(this,"you didn't add Mr. Poop to contact list", Toast.LENGTH_SHORT).show();
+            }.create() // .create() function make create from builder
+
+        btnDialog1.setOnClickListener {
+            addContactDialog.show()
+        }
+
+        // Radio button Dialog box (singlechoice dialog)
+        // for this have to create array to define different options
+        val options = arrayOf<String>("Firat Item", "Second Item", "Third Item");
+        val singleChoiceDialog = AlertDialog.Builder(this)
+            .setTitle("Choose on of these options")
+            .setSingleChoiceItems(options, 0){dialogInterface,i-> // @params (optionlist, default check index)
+                Toast.makeText(this,"you clicked on ${options[i]}", Toast.LENGTH_SHORT).show();
+            }
+            .setPositiveButton("Accept"){ dialogInterface, i -> // jere
+                Toast.makeText(this,"you accepted the singleChoiceDialog", Toast.LENGTH_SHORT).show();
+            }
+            .setNegativeButton("Decline"){ dialogInterface, i ->
+                Toast.makeText(this,"you decline singlechoiceDailog", Toast.LENGTH_SHORT).show();
+            }.create() // .create() function make create from builder
+
+        btnDialog2.setOnClickListener {
+            singleChoiceDialog.show()
+        }
+
+        // checkbox Dialog box (multichoice dialog)
+        // for this have to create array to define different options
+        //val options = arrayOf<String>("Firat Item", "Second Item", "Third Item");
+        val multiChoiceDialog = AlertDialog.Builder(this)
+            .setTitle("Choose on of these options")
+            .setMultiChoiceItems(options, booleanArrayOf(false, false, false)){ dialogInterface, i, b-> // @params (optionlist, default check index)
+                if(b){
+                    Toast.makeText(this,"you checked on ${options[i]}", Toast.LENGTH_SHORT).show();
+                }else{
+                    Toast.makeText(this,"you unchecked on ${options[i]}", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+            .setPositiveButton("Accept"){ dialogInterface, i -> // jere
+                Toast.makeText(this,"you accepted the multiChoiceDialog", Toast.LENGTH_SHORT).show();
+            }
+            .setNegativeButton("Decline"){ dialogInterface, i ->
+                Toast.makeText(this,"you decline multiChoiceDialog", Toast.LENGTH_SHORT).show();
+            }.create() // .create() function make create from builder
+
+        btnDialog3.setOnClickListener {
+            multiChoiceDialog.show()
+        }
+    }
+}
+```
+
+### SPINNER
