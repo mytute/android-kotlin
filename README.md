@@ -1033,3 +1033,96 @@ class MainActivity : AppCompatActivity() {
 ```
 
 ### SPINNER
+
+when we have list to select we can use SPINNER instead of radio-buttons/checkbox. it is simple select view.
+
+here for the options instead of string array we can use string xml for escape boilerplate code.
+
+[go] "res" > [click] "values" > [click] "string.xml"  
+
+> string.xml    
+
+```xml
+<resources>
+    <string name="app_name">test001</string>
+    <string-array name="months">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
+</resources>
+```
+
+[go] "activity_main.xml" and create spinner   
+
+> activity_main.xml    
+
+```xml
+<Spinner
+    android:id="@+id/spMonths"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:entries="@array/months" // only for get values form string.xml
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintHorizontal_bias="0.5"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintVertical_bias="0.5" />
+```
+
+let's see how to detect currently selected items.   
+example show options from string.xml and runtime    
+
+> MainActivity.kt
+
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_main)
+    Log.d("mainActivity", "this is our first log message");
+
+    /* //////////////////////////////////////////////////////////////////
+                      SET ITEMS ON RUNTIME
+
+     //////////////////////////////////////////////////////////////// */
+
+    // crate options list for spinner
+    val customList = listOf<String>("First", "Second", "Third", "Fourth");
+    // spinner is a view for that we need create adapter that list to spinner list
+    val adapter = ArrayAdapter<String>(this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, customList);
+    spMonths.adapter = adapter;
+
+
+    /* //////////////////////////////////////////////////////////////////
+                    SET ITEMS FROM STRING.XML
+
+    //////////////////////////////////////////////////////////////// */
+
+    // we have to write class for onItemClickListener
+    // press Ctrl+I for get override functions
+    spMonths.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        // change the params name for more understanding
+        override fun onItemSelected(adapterView: AdapterView<*>?, view: View?, position: Int, id: Long) {
+            // here we can't pass this because of inside anonymous class
+          Toast.makeText(this@MainActivity, "You Selected ${adapterView?.getItemAtPosition(position).toString()}", Toast.LENGTH_LONG).show()
+        }
+        override fun onNothingSelected(adapterView: AdapterView<*>?) {
+        }
+    }
+
+}
+```
+
+Now let's see how to set option in runtime    
+
+### RECYCLERVIEW 
