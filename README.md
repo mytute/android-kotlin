@@ -1125,4 +1125,345 @@ override fun onCreate(savedInstanceState: Bundle?) {
 
 Now let's see how to set option in runtime    
 
-### RECYCLERVIEW 
+### RECYCLERVIEW
+
+here we are able to create lists of views that only the visible views will be loaded and the rest will be recycled.
+ListView also have similar behaviior but recycleview much more efficient.   
+
+RECYCLERVIEW have to include in our build.gradle(Module: app) file.    
+insert following line in dependencies object and click "Sync Now"    
+```gradle
+dependencies {
+
+    implementation 'androidx.core:core-ktx:1.7.0'
+    ...  
+    implementation 'androidx.recyclerview:recyclerview:1.1.0' // + add
+}
+```
+
+> Activity_main.xml   
+
+```xml
+<androidx.recyclerview.widget.RecyclerView
+    android:id="@+id/rvTodos"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    app:layout_constraintBottom_toTopOf="@+id/etTodo"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent" />
+
+<EditText
+    android:id="@+id/etTodo"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:hint="New Todo"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toStartOf="@+id/btnAddTodo"
+    app:layout_constraintStart_toStartOf="parent" />
+
+<Button
+    android:id="@+id/btnAddTodo"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Add"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent" />
+```
+
+create new layout for todo item that appear on recyclerview.    
+
+[goto ] "res" > [r-click] "layout" > [select] "New" > [click] "Layout Resource File" > [input] "File name" as item_todo > [select] "Root element" as ...ConstraintLayout   
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent" // add
+    android:layout_height="100dp" // add
+    android:padding="16dp"> // add
+
+    <TextView
+        android:id="@+id/tvTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Title" // going to change with
+        android:textSize="24sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/cbDone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <CheckBox
+        android:id="@+id/cbDone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
+```
+
+next create an adapter to recycleview for create views for items and set the contents of our items accordingly
+
+[goto] [r-click] folder where have "MainActivity.kt" file > [select] "New" > [click] "Kotlin File/Class" > [select] "Class" > [Input] "TodoAdapter"
+
+> TodoAdapter.kt
+
+```kt  
+package com.example.test001
+
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
+import kotlinx.android.synthetic.main.item_todo.view.*
+
+class TodoAdapter(
+    var todos: List<Todo>
+):RecyclerView.Adapter<TodoAdapter.TodoViewHolder>() {
+    inner class TodoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+
+    // ctr + i for get override fun
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TodoViewHolder {
+        // (R.layout.item_todo is our layout file of items.
+       val view = LayoutInflater.from(parent.context).inflate(R.layout.item_todo, parent, false);
+        return TodoViewHolder(view);
+    }
+
+    // ctr + i for get override fun
+    // this function get data from our todos and set to corresponding view
+    /*
+    * @param holder - access views in view holder(textview and checkbox)
+    * @param position - current index of view that we are binding.
+    * */
+    override fun onBindViewHolder(holder: TodoViewHolder, position: Int) {
+        holder.itemView.apply {
+            tvTitle.text = todos[position].title;
+            cbDone.isChecked = todos[position].isChecked;
+        }
+    }
+
+    // ctr + i for get override fun
+    override fun getItemCount(): Int {
+        return todos.size;
+    }
+}
+```
+to tell how our todo items looks like we need another class.   
+
+[goto] [r-click] folder where have "MainActivity.kt" file > [select] "New" > [click] "Kotlin File/Class" > [select] "Class" > [Input] "Todo"
+this class does not have a body and only data class.
+
+```kt
+package com.example.test001
+
+data class Todo (
+    val title: String,
+    val isChecked: Boolean
+)
+```
+
+the in MainActivity.kt file create a todoList    
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        Log.d("mainActivity", "this is our first log message");
+
+       // create default todo items
+        var todoList = mutableListOf<Todo>(
+            Todo("Follow AndroidDevs", false),
+            Todo("Learn about RecyclerView", true),
+            Todo("Feed my cat", false),
+            Todo("Eat some curry", true),
+            Todo("ask my crush out", false),
+            Todo("Take a shower", false),
+        );
+
+        // add todo items to adapter an recycleview
+        val adapter = TodoAdapter(todoList);
+        rvTodos.adapter = adapter;
+        rvTodos.layoutManager = LinearLayoutManager(this);
+
+        btnAddTodo.setOnClickListener {
+            val title = etTodo.text.toString();
+            val todo = Todo(title, false);
+            todoList.add(todo); // add to list but not updating
+            adapter.notifyItemInserted(todoList.size -1);// update template
+            // following function will update hole RecyclerView not efficient. use above function
+            // adapter.notifyDataSetChanged()
+        }
+    }
+}
+```
+
+### FRAGMENTS
+
+This is like ui component that easily reuse and FRAGMENTS have there own life cycle(more lightweight than activities).      
+1. static fragment 2. dynamic fragment
+
+when we are use dynamicaly we are going to use
+
+go to activity_main.xml and create 2 buttons and 1 FrameLayout(fragment)    
+
+> activity_main.xml   
+
+```xml
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp"
+    tools:context=".MainActivity">
+
+    <Button
+        android:id="@+id/btnFragment1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fragment 1"
+        app:layout_constraintEnd_toStartOf="@+id/btnFragment2"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnFragment2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fragment 2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/btnFragment1"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <fragment
+        android:id="@+id/fragment_container"
+        android:name="com.example.test001.BlankFragment"
+        tools:layout="@layout/fragment_blank"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnFragment1" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+
+to create new fragment    
+[goto] [r-click] folder where have "MainActivity.kt" file > [select] "New" > [select] "Fragment" > [select] "Fragment(Blank)" > [Input] names
+
+go to fragment xml file and change "FramLayout" to "ConstraintLayout" and create
+> fragment_first.xml
+
+```xml
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".BlankFragment">
+
+    <TextView
+        android:id="@+id/tvFragmentFirst"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="First Fragment"
+        android:textSize="30sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+> first_fragment.kt
+
+```kotlin
+// remove all default functions in class
+// and insert id "R.layout.fragment_blank" to Fragment constructor. just it.
+class BlankFragment : Fragment(R.layout.fragment_blank) {
+
+}
+```
+
+to create next fragment just copy-past  first_fragment.kt and fragment_first.xml on same location and change
+names to second_fragment.kt and fragment_second.xml. also rename
+TextView id and text on fragment_second.xml
+layout id on second_fragment.kt   
+
+> MainActivity.kt
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        Log.d("mainActivity", "this is our first log message");
+
+        // create instance of fragment classes
+        val firstFrament = BlankFragment();
+        val secondFragment = SecondFragment();
+
+        // when init button set show to firstFrament
+        supportFragmentManager.beginTransaction().apply {
+            replace(R.id.flFragment, firstFrament);
+            commit();
+        }
+
+        btnFragment1.setOnClickListener {
+            supportFragmentManager.beginTransaction().apply {
+                replace(R.id.flFragment, firstFrament);
+                addToBackStack(null); // to add back button active
+                commit();
+            }
+        }
+        btnFragment2.setOnClickListener {
+            supportFragmentManager.beginTransaction().apply {
+                replace(R.id.flFragment, secondFragment);
+                addToBackStack(null); // to add back button active
+                commit();
+            }
+        }
+
+    }
+}
+```
+
+### BOTTOM NAVIGATION VIEW
+
+this is not in android standard libulary. so we need to import it to build.gradle(Module test001.app) file. click Sync
+
+```java
+dependencies {
+    ...
+    implementation 'com.google.android.material:material:1.2.0-alpha04'
+}
+```
+
+to create bottom nav   
+[r-click] "res" folder > [select] "New" > [select] "Android Resource Directory" > [select] on "Resource type" dropdown "menu" > [click] "Ok"     
+
+now inside "res" folder "menu" folder appeared
+
+[goto] 'res' folder > [r-click] "menu" folder > [select] "New" > [select] "Menu resource file" > [input] "File name" as "bottom_nav_menu"  
+
+next create icons for app bar menu (for settings and favorites)    
+
+[goto] "drawable" > [select] "New" > [select] "Image Asset" > [input] "Icon Type" to "Action Bar and Tab Icons" > [input] "Name" any name like "ic_settings" > [select] "Asset Type" to "Clip Art" > [click] "Clip Art" icon and search the icon > [input] "Theme" as you want like "HOLO_DARK"
