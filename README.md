@@ -1457,7 +1457,7 @@ dependencies {
 }
 ```
 
-to create bottom nav   
+to create menu for bottom nav   
 [r-click] "res" folder > [select] "New" > [select] "Android Resource Directory" > [select] on "Resource type" dropdown "menu" > [click] "Ok"     
 
 now inside "res" folder "menu" folder appeared
@@ -1467,3 +1467,374 @@ now inside "res" folder "menu" folder appeared
 next create icons for app bar menu (for settings and favorites)    
 
 [goto] "drawable" > [select] "New" > [select] "Image Asset" > [input] "Icon Type" to "Action Bar and Tab Icons" > [input] "Name" any name like "ic_settings" > [select] "Asset Type" to "Clip Art" > [click] "Clip Art" icon and search the icon > [input] "Theme" as you want like "HOLO_DARK"
+
+then go to the >menu > bottom_nav_menu.xml
+
+> bottom_nav_menu.xml   
+
+```xml  
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/miHome"
+        android:title="Home"
+        android:icon="@drawable/ic_home"/>
+    <item
+        android:id="@+id/miMessages"
+        android:title="Messages"
+        android:icon="@drawable/ic_messages"/>
+    <item
+        android:id="@+id/miProfile"
+        android:title="Profile"
+        android:icon="@drawable/ic_profile"/>
+</menu>
+```  
+
+then go to the activity_main.xml to add bottom navigation(good to remove padding when add fragment)
+
+> activity_main.xml   
+
+```xml
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <FrameLayout
+        android:id="@+id/flFragment"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:menu="@menu/bottom_nav_menu" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+then make constraint "FrameLayout" with "BottomNavigationView"(Google)
+
+
+if you have color issue with bottom menu please go to res> values> themes > themes.xml file.  
+
+> themes.xml   
+
+```xml
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+<!--    <style name="Theme.Test001" parent="Theme.MaterialComponents.DayNight.DarkActionBar">-->
+    <style name="Theme.Test001" parent="Theme.MaterialComponents.Light.DarkActionBar"> // add here
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- Customize your theme here. -->
+    </style>
+</resources>
+```
+
+next we have to crate basic fragment layout
+
+[r-click] layout > "New" > "Fragment" > "Fragment(black)" > [input] "Fragment Name"    
+then change to "ConstraintLayout" layout fragment.
+
+eg : HomeFragment, MessageFragment, ProfileFragment
+
+```xml  
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragment_tab_home">
+
+    <TextView
+        android:id="@+id/tvFragmentHome"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Home Fragment"
+        android:textSize="30sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+then go to MainActivity.kt file connect fragments with bottom_nav_menu   
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        Log.d("mainActivity", "this is our first log message");
+
+        val homeFragment = fragment_tab_home();
+        val messageFragment = fragment_tab_message();
+        val profileFragment = fragment_tab_profile();
+
+        setCurrentFragment(homeFragment);
+
+        // set bottom tab navigation
+        bottomNavigationView.setOnNavigationItemSelectedListener {
+            when(it.itemId){
+                R.id.miHome -> setCurrentFragment(homeFragment)
+                R.id.miMessages -> setCurrentFragment(messageFragment)
+                R.id.miProfile -> setCurrentFragment(profileFragment)
+
+            }
+            true; // because of lambda function have to set return value.
+        }
+
+        // set badge to icon (ex: count of messages)
+        bottomNavigationView.getOrCreateBadge(R.id.miMessages).apply {
+            number = 10
+            isVisible = true
+        }
+    }
+
+    private fun setCurrentFragment(fragment: Fragment) = supportFragmentManager.beginTransaction().apply {
+        replace(R.id.flFragment, fragment);
+        addToBackStack(null);
+        commit();
+    }
+}
+```
+
+### CREATING SWIPABLE VIEWS WITH VIEWPAGER 2    
+
+This is very similar to recycleview(with adapter). Also not contain in android standerd libulary.
+
+```gradle
+dependencies {
+    ...
+    implementation 'com.google.android.material:material:1.2.0-alpha04' // past and click sync
+}
+```
+
+add viewpager for xml file make constraint using "Design"
+> activity_main   
+
+```xml
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp"
+    tools:context=".MainActivity">
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/vpImages"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.5" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+Then create layout resource file   
+
+[goto ] "res" > [r-click] "layout" > [select] "New" > [click] "Layout Resource File" > [input] "File name" as item_view_pager > [select] "Root element" as ...ConstraintLayout   
+
+and make constraint using UI
+can't set item_view_pager.xml constraint height only equel to "match_parent"  
+
+>  item_view_pager.xml
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ImageView
+        android:id="@+id/ivImage"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.5" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+[r-click] on "drawable" folder and past your images there.
+
+next create recyclerview adapter for crate SWIPABLE views    
+
+go > java>  .. > [rclick] "New" > [select] "kotlin File/Class" > [select] "Class" >  [input] "Name" it as ViewPagerAdapter  > [click] Ok   
+
+> ViewPagerAdapter  
+
+```xml
+// this class will take images in his constructor
+// because we added our images to drawable folder we can get those images with there id
+class ViewPagerAdapter (
+    val images: List<Int>
+        ): RecyclerView.Adapter<ViewPagerAdapter.ViewPagerViewHolder>() {
+
+    inner class ViewPagerViewHolder(itemView: View):  RecyclerView.ViewHolder(itemView);
+
+    // press crl+i to implement following 3 functions
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewPagerViewHolder {
+      val view = LayoutInflater.from(parent.context).inflate(R.layout.item_view_pager, parent, false);
+        return ViewPagerViewHolder(view);
+    }
+
+    override fun onBindViewHolder(holder: ViewPagerViewHolder, position: Int) {
+       val curImage = images[position];
+        holder.itemView.ivImage.setImageResource(curImage);
+    }
+
+    override fun getItemCount(): Int {
+      return images.size;
+    }
+}
+```
+
+now call this adapter with images from MainActivity.kt file.  
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        Log.d("mainActivity", "this is our first log message");
+
+        val images = listOf<Int>(
+            R.drawable.girl_frock1,
+            R.drawable.girl_frock2,
+            R.drawable.girl_frock3,
+            R.drawable.girl_frock4,
+            R.drawable.girl_frock5,
+            R.drawable.girl_frock6,
+        );
+
+        val adapter = ViewPagerAdapter(images);
+        vpImages.adapter = adapter;
+
+        // if you want to change orientation of slider
+        vpImages.orientation = ViewPager2.ORIENTATION_VERTICAL;
+
+        // to make first slider automatic movement
+        vpImages.beginFakeDrag();
+        vpImages.fakeDragBy(-10f);
+        vpImages.endFakeDrag()
+
+    }
+}
+```
+
+### TABLAYOUT WITH VIEWPAGER 2
+
+This tutorial connect with above "VIEWPAGER 2" tutorial    
+here In activity_main.xml file change "ConstrainLayout" to "LinearLayout" for avoid overlap ViewPager2 with "Tablayout"  
+
+In "LinearLayout" add "orientation="vertical"" and remove constraint aligns if there.
+
+> activity_main.xml 
+
+```xml
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp"
+    tools:context=".MainActivity">
+
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tlTabBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/vpImages"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+
+</LinearLayout>
+```
+
+
+> MainActivity.kt
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        Log.d("mainActivity", "this is our first log message");
+
+        val images = listOf<Int>(
+            R.drawable.girl_frock1,
+            R.drawable.girl_frock2,
+            R.drawable.girl_frock3,
+            R.drawable.girl_frock4,
+            R.drawable.girl_frock5,
+            R.drawable.girl_frock6,
+        );
+
+        val adapter = ViewPagerAdapter(images);
+        vpImages.adapter = adapter;
+
+
+
+        // connect "TabLayout" with "ViewPager2"
+        TabLayoutMediator(tlTabBar, vpImages) { tab, position ->
+            tab.text = "Tab ${position +1}"
+        }.attach();
+
+
+        tlTabBar.setOnTabSelectedListener(object: TabLayout.OnTabSelectedListener{
+            // when user in tab1 and again reselect tab1
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                Toast.makeText(this@MainActivity, "Reelected ${tab?.text}", Toast.LENGTH_SHORT)
+            }
+            // when unselect current tag
+            override fun onTabUnselected(tab: TabLayout.Tab?) {
+                Toast.makeText(this@MainActivity, "Unelected ${tab?.text}", Toast.LENGTH_SHORT)
+            }
+            // select the new tab
+            override fun onTabReselected(tab: TabLayout.Tab?) {
+              Toast.makeText(this@MainActivity, "Selected ${tab?.text}", Toast.LENGTH_SHORT)
+            }
+        })
+
+    }
+}
+
+```
