@@ -1762,7 +1762,7 @@ here In activity_main.xml file change "ConstrainLayout" to "LinearLayout" for av
 
 In "LinearLayout" add "orientation="vertical"" and remove constraint aligns if there.
 
-> activity_main.xml 
+> activity_main.xml
 
 ```xml
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -1838,3 +1838,467 @@ class MainActivity : AppCompatActivity() {
 }
 
 ```
+
+if you want to pass text list instead of images  
+
+> ViewPagerAdaper.kt
+
+```kotlin
+class ViewPagerAdapter(private val textList: List<String>) : RecyclerView.Adapter<ViewPagerAdapter.ViewHolder>() {
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_text, parent, false)
+        return ViewHolder(view)
+    }
+
+    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+        holder.bind(textList[position])
+    }
+
+    override fun getItemCount(): Int {
+        return textList.size
+    }
+
+    inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        private val textView: TextView = itemView.findViewById(R.id.textView)
+
+        fun bind(text: String) {
+            textView.text = text
+        }
+    }
+}
+```
+
+> MainActivity.kt  
+
+```kotlin
+
+        val textList = listOf(
+            "Text 1",
+            "Text 2",
+            "Text 3",
+            "Text 4",
+            "Text 5"
+        )
+
+        val adapter = ViewPagerAdapter(textList)
+        vpImages.adapter = adapter
+
+```
+
+### SLIDABLE MENU WITH NAVIGATION DRAWER
+
+For this we heve to import google meterial in build.gradle(Module: test001.app) file.
+
+```gradle
+dependencies {
+    ...
+    implementation 'com.google.android.material:material:1.2.0-alpha04' // past and click sync
+}
+```
+
+go to activity_main.xml and change it in to "DrawerLayout" and give id to it.   
+DrawerLayout should only contain 1. activity of fragment 2. navigation view.
+
+> activity_main.xml
+
+```xml  
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/drawerLayout" // add id
+    android:orientation="vertical"
+    android:padding="8dp"
+    tools:context=".MainActivity">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ACTIVITY"
+            android:textSize="40sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.5"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.5" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/navView" // add id to handle menu item click
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        app:headerLayout="@layout/nav_header" // will create later
+        app:menu="@menu/nav_drawer_menu" // will create later
+        android:layout_gravity="start"
+        android:fitsSystemWindows="true" // drawer leave space for system windows
+    />
+
+</androidx.drawerlayout.widget.DrawerLayout>
+```
+
+to create navigation view
+
+[r-click] "res" folder > [select] "New" > [select] "Layout Resource File" > [input] "File name" as "nav_header" define name on xml file > [select] "Root element" as ConstraintLayout > [click] "Ok"
+
+> nav_header.xml
+
+```xml  
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="150dp" // change height from "match_parent"
+    android:background="@color/design_default_color_primary"> // addd color to identify
+
+   // leter you can add what you want here
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+to create menu  
+
+if you already create menu file then [r-click] "menu" folder > [select] "New" > [select] "Menu Resource File" > [input] "File name" as nav_drawer_menu  
+
+> nav_drawer_menu.xml
+
+```xml
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/miItem1"
+        android:title="Item 1"/>
+    <item
+        android:id="@+id/miItem2"
+        android:title="Item 2"/>
+    <item
+        android:id="@+id/miItem3"
+        android:title="Item 3"/>
+
+</menu>
+```
+
+> MainActivity.kt
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+
+    // lateinit mean it will define later. here this variable use globally on MainActivity class
+    lateinit var toggle: ActionBarDrawerToggle;
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        Log.d("mainActivity", "this is our first log message");
+
+        // set able to open and close the drawer by simply clicking
+        // by default it will open when swiping
+        // R.string.open, R.string.close for blind people can define on "string.xml" file
+        toggle = ActionBarDrawerToggle(this, drawerLayout, R.string.open, R.string.close);
+        drawerLayout.addDrawerListener(toggle); // connect toggle with drawerLayout
+        toggle.syncState(); //  ready to use
+
+        supportActionBar?.setDisplayHomeAsUpEnabled(true) // to toggle button move to back arrow when open the drawer
+
+        // handle menu item click
+        navView.setNavigationItemSelectedListener {
+            when(it.itemId){
+                R.id.miItem1 -> Toast.makeText( applicationContext, "Clicked item 1", Toast.LENGTH_SHORT).show();
+                R.id.miItem2 -> Toast.makeText( applicationContext, "Clicked item 2", Toast.LENGTH_SHORT).show();
+                R.id.miItem3 -> Toast.makeText( applicationContext, "Clicked item 3", Toast.LENGTH_SHORT).show();
+            }
+            true;
+        }
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if(toggle.onOptionsItemSelected(item)){
+            return true;
+        }
+        return super.onOptionsItemSelected(item)
+    }
+}
+```
+
+###  SAVING DATA IN SHARED PREFERENCES  
+
+Here show how to load some small about of data even after close the app using PREFERENCES  
+
+> activity_main.xml
+
+```xml
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <EditText
+        android:id="@+id/etName"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:hint="Name"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/etAge"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:hint="Age"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/etName" />
+
+    <CheckBox
+        android:id="@+id/cbAdult"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="Adult"
+        app:layout_constraintEnd_toEndOf="@+id/etAge"
+        app:layout_constraintTop_toBottomOf="@+id/etAge" />
+
+    <Button
+        android:id="@+id/btnLoad"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="Load"
+        app:layout_constraintEnd_toEndOf="@+id/cbAdult"
+        app:layout_constraintTop_toBottomOf="@+id/cbAdult" />
+
+    <Button
+        android:id="@+id/btnSave"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:text="Save"
+        app:layout_constraintEnd_toStartOf="@+id/btnLoad"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/btnLoad" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+> MainActivity.kt
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        Log.d("mainActivity", "this is our first log message");
+
+        // this method should use smaller amount of data
+
+       // let's create preference for preference object
+        /* Three modes of preferences
+              1. private 2. public(other apps can share data) 3. append mode
+        *
+        * */
+        val sharedPref = getSharedPreferences("myPref", Context.MODE_PRIVATE );
+        val editor = sharedPref.edit(); // write to share preferences we need it's editor
+
+        btnSave.setOnClickListener {
+            val name = etName.text.toString();
+            val age = etAge.text.toString().toInt();
+            val isAdult = cbAdult.isChecked;
+
+            editor.apply {
+                // value share as key-value pair
+                putString("name", name);
+                putInt("age", age);
+                putBoolean("isAdult", isAdult);
+                apply();
+                // commit(); also same but syn that block our code
+            }
+        }
+
+        btnLoad.setOnClickListener {
+            // @param1 : our key, @param2 : default value if value not existed
+            val name = sharedPref.getString("name", null);
+            val age = sharedPref.getInt("age", 0);
+            val isAdult = sharedPref.getBoolean("isAdult", false);
+
+            etName.setText(name);
+            etAge.setText(age.toString());
+            cbAdult.isChecked = isAdult;
+        }
+    }
+}
+```
+
+###  NOTIFICATIONS   
+
+make following
+
+> activity_main.xml
+
+```xml
+<Button
+    android:id="@+id/btnShowNotification"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="8dp"
+    android:text="show notification"
+    android:textSize="12sp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintHorizontal_bias="0.5"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintVertical_bias="0.5" />
+```
+
+> MainActivity.kt  
+
+```kotlin
+class MainActivity : AppCompatActivity() {
+
+    val CHANNEL_ID = "channelID";
+    val CHANNEL_NAME = "channelName";
+    val NOTIFICATION_ID = 0;
+
+    val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
+    val vibrationPattern = longArrayOf(0, 1000, 500, 1000) // Vibration pattern: wait 0ms, vibrate for 1000ms, wait 500ms, vibrate for 1000ms
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        Log.d("mainActivity", "this is our first log message");
+
+        // @param2 : activity class that we need to open when touch notification
+        val intent = Intent(this, MainActivity::class.java);
+        val pendingIntent = TaskStackBuilder.create(this).run {
+            // .create works above android api 16
+            // .run{} for in kotlin do some additional configurations
+
+            addNextIntentWithParentStack(intent); // allow to go previous activity using back button
+            getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT) // FLAG_UPDATE_CURRENT only update is there data
+        }
+
+        // first create notification channel then post notification
+        // channel must be unique id
+        createNotificationChannel();
+
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Awsome notification")
+            .setContentText("This is the content text")
+            .setSmallIcon(R.drawable.ic_favorite) // set icon
+            .setContentIntent(pendingIntent)
+            .setSound(defaultSoundUri) // set sound + show push notification
+            .setVibrate(vibrationPattern) // set vibration
+            .setPriority(NotificationCompat.PRIORITY_HIGH).build() // set order of showing
+
+        val notificationManager = NotificationManagerCompat.from(this);
+
+        // show notification
+        btnShowNotification.setOnClickListener {
+            notificationManager.notify(NOTIFICATION_ID, notification);
+        }
+    }
+
+    // create notification channel (only after version "OREO")
+    fun createNotificationChannel(){
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){ // "O" mean android OREO
+            // NotificationManager.IMPORTANCE_DEFAULT can change according to priority to show message with sound
+            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME,NotificationManager.IMPORTANCE_DEFAULT).apply {
+                // change behaviour of the notification here
+                lightColor = Color.RED
+                enableLights(true);
+            }
+            // create notification manager
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager;
+            manager.createNotificationChannel(channel);
+        }
+    }
+
+    // concept of pending intents allow execute a piece for code from our app
+}
+```
+
+### INTENT SERVICE  
+
+This is use to do background works even our app is minimized. There many types of INTENT SERVICES.
+But following example shows how to work on a different threat that not block UI threat. But this is
+not multy-threading.
+
+for every service we have to create new class for that  
+[r-click] folder which contain "MainActivity.kt" >  [select] "New" > [select] "Kotlin Class/File" > [select] "Class" & [input] MyIntentService & [press] Enter key   
+
+> activity_main.xml
+
+> MyIntentService.kt  
+
+```kotlin
+class MyIntentService: IntentService("MyIntentService") {
+
+    init {
+        instance = this;
+    }
+
+    companion object{
+        private lateinit var  instance: MyIntentService;
+        var isRunning = false;
+
+        fun stopService(){
+            Log.d("MyIntentService", "Service is stopping");
+            isRunning = false;
+            instance.stopSelf();
+        }
+    }
+
+    // when we start the service have to create  Intent
+    // service can have multiple intent by calling onHandleIntent "onHandleIntent" function
+    // even have multiple intent it work after one finished in order
+    override fun onHandleIntent(p0: Intent?) {
+        try {
+            isRunning = true;
+            while (isRunning){
+                Log.d("mainActivity", "service is running...");
+                Thread.sleep(1000)
+            }
+
+        }catch (e: InterruptedException){
+            Thread.currentThread().interrupt()
+        }
+    }
+}
+```
+
+> MainActivity.kt
+
+> AndroidManifest.xml  
+
+```xml
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission ..../>
+      // ...
+    <application  ... >
+          // ...
+        <activity android:name=". ...." />
+          // ....
+        <service android:name=".MyIntentService" /> // + add here
+    </application>
+
+</manifest>
+```
+
+### SERVICE
+
+This tutorial connected with above INTENT SERVICES tutorial.   
+This service class will support to multithreading but it run our main thread by default. For that we have to manually start the new tread.
